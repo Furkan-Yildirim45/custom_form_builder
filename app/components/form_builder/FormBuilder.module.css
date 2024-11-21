@@ -1,0 +1,8 @@
+.body {
+    background-color: white; /* Arka plan rengini beyaz yapar */
+    color: black;           /* Metin rengini siyah yapar */
+    padding: 20px;
+    min-height: 100vh;      /* Sayfanın tamamını kapsar */
+    box-sizing: border-box; /* Padding dahil toplam genişliği ayarlar */
+  }
+  
