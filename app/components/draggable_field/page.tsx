@@ -12,6 +12,7 @@ const DraggableField: React.FC<DraggableFieldProps> = ({
   moveField,
   updateField,
 }) => {
+  // Sürükleme için pozisyon ve boyutları kontrol et
   const [position, setPosition] = useState({ x: field.x || 0, y: field.y || 0 });
   const [dimensions, setDimensions] = useState({
     width: 200, // Başlangıç genişliği
@@ -24,24 +25,23 @@ const DraggableField: React.FC<DraggableFieldProps> = ({
   // Sürükleme için useDrag hook'u
   const [, connectDrag] = useDrag({
     type: "field",
-    item: { id: field.id, initialX: position.x, initialY: position.y }, // İlk pozisyonu da ilet
+    item: { id: field.id, initialX: position.x, initialY: position.y },
   });
 
   // Bırakma için useDrop hook'u
   const [, connectDrop] = useDrop({
-    accept: "field", // Bu öğeyi kabul ederiz
+    accept: "field",
     hover: (item: any, monitor) => {
       const delta = monitor.getDifferenceFromInitialOffset();
       if (delta) {
-        const newX = item.initialX + delta.x; // Sürükleme sırasında yeni X pozisyonu
-        const newY = item.initialY + delta.y; // Sürükleme sırasında yeni Y pozisyonu
-        setPosition({ x: newX, y: newY }); // Konumu güncelle
+        const newX = item.initialX + delta.x;
+        const newY = item.initialY + delta.y;
+        setPosition({ x: newX, y: newY });
       }
     },
     drop: (item: any, monitor) => {
       const clientOffset = monitor.getClientOffset();
       if (clientOffset) {
-        // Mouse bıraktığında final pozisyonu kaydet
         moveField(item.id, clientOffset.x, clientOffset.y);
       }
     },
@@ -51,13 +51,13 @@ const DraggableField: React.FC<DraggableFieldProps> = ({
   const handleResizeStart = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsResizing(true);
-    setInitialMousePosition({ x: e.clientX, y: e.clientY }); // Mouse pozisyonunu kaydet
+    setInitialMousePosition({ x: e.clientX, y: e.clientY });
   };
 
   const handleResize = (e: React.MouseEvent) => {
     if (isResizing && ref.current) {
-      const deltaX = e.clientX - initialMousePosition.x; // Mouse hareketi ile genişlik farkı
-      const deltaY = e.clientY - initialMousePosition.y; // Mouse hareketi ile yükseklik farkı
+      const deltaX = e.clientX - initialMousePosition.x;
+      const deltaY = e.clientY - initialMousePosition.y;
 
       // Yeni boyutları hesapla
       const newWidth = Math.max(100, dimensions.width + deltaX); // Minimum 100px genişlik
@@ -83,18 +83,27 @@ const DraggableField: React.FC<DraggableFieldProps> = ({
       ref={ref}
       style={{
         position: "absolute",
-        left: position.x, // Güncellenmiş X pozisyonu
-        top: position.y,  // Güncellenmiş Y pozisyonu
-        width: dimensions.width,  // Güncellenmiş genişlik
-        height: dimensions.height, // Güncellenmiş yükseklik
-        cursor: isResizing ? "se-resize" : "move",  // Boyutlandırma sırasında cursor değişir
+        left: position.x,
+        top: position.y,
+        width: dimensions.width,
+        height: dimensions.height,
+        cursor: isResizing ? "se-resize" : "move",
         backgroundColor: "#ccc",
         border: "2px solid #000",
       }}
       className="p-4 bg-blue-100 border rounded"
     >
-      {field.label || "Sürüklenebilir Alan"} {/* Alanın etiketini göster */}
       
+      {/* Input türleri */}
+      {field.type === "text" && <input type="text" />}
+      {field.type === "textarea" && <textarea />}
+      {field.type === "checkbox" && <input type="checkbox" />}
+      {field.type === "radio" && field.options?.map((option: string, index: number) => (
+        <div key={index}>
+          <input type="radio" /> {option}
+        </div>
+      ))}
+
       {/* Boyutlandırma tutamağı */}
       <div
         onMouseDown={handleResizeStart}
@@ -108,7 +117,7 @@ const DraggableField: React.FC<DraggableFieldProps> = ({
           cursor: "se-resize", // Sağ alt köşe boyutlandırma için
         }}
       />
-      
+
       {/* Boyutlandırma işlemi aktifse, onMouseMove ve onMouseUp event'leri aktif olacak */}
       {isResizing && (
         <div

@@ -1,4 +1,3 @@
-"use client"
 import React, { useState } from "react";
 
 type FieldType = "text" | "textarea" | "checkbox" | "image" | "date" | "radio" | "file";
@@ -18,6 +17,7 @@ const FormBuilder: React.FC<{ addFieldToPreview: (field: Field) => void }> = ({
   const [radioOptions, setRadioOptions] = useState<string[]>([]);
   const [isRadioOptionsVisible, setIsRadioOptionsVisible] = useState(false);
 
+  // Yeni form öğesi ekleme
   const addField = (type: FieldType) => {
     const newField: Field = { id: Date.now(), type, label: "", value: "" };
 
@@ -26,7 +26,7 @@ const FormBuilder: React.FC<{ addFieldToPreview: (field: Field) => void }> = ({
     }
 
     setFields([...fields, newField]);
-    addFieldToPreview(newField);
+    addFieldToPreview(newField);  // HomePage bileşenine öğe ekleme
 
     if (type === "radio") {
       setRadioOptions([]);
@@ -34,6 +34,7 @@ const FormBuilder: React.FC<{ addFieldToPreview: (field: Field) => void }> = ({
     }
   };
 
+  // Alan üzerinde değişiklik yapma (etiket vb.)
   const handleFieldChange = (id: number, key: keyof Field, value: string) => {
     setFields(fields.map((field) => (field.id === id ? { ...field, [key]: value } : field)));
   };
@@ -47,6 +48,7 @@ const FormBuilder: React.FC<{ addFieldToPreview: (field: Field) => void }> = ({
     <div className="p-4 bg-white rounded shadow">
       <h2 className="text-lg font-bold mb-4">Form Elemanları</h2>
       <div className="flex flex-col space-y-2">
+        {/* Form öğesi eklemek için butonlar */}
         <button className="btn-primary" onClick={() => addField("text")}>Metin Alanı Ekle</button>
         <button className="btn-primary" onClick={() => addField("textarea")}>Metin Kutusu Ekle</button>
         <button className="btn-primary" onClick={() => addField("checkbox")}>Onay Kutusu Ekle</button>
