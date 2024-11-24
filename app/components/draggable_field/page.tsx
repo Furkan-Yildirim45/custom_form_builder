@@ -1,108 +1,64 @@
-import React, { useRef } from 'react';
-import { useDrag } from 'react-dnd';
-import { ResizableBox } from 'react-resizable';
-import 'react-resizable/css/styles.css';
+import React, { useState, useRef } from "react";
+import { useDrag, useDrop } from "react-dnd";
 
-const DraggableField: React.FC<{ field: Field; moveField: (id: number, x: number, y: number) => void, handleFieldChange: (id: number, key: keyof Field, value: string) => void }> = ({ field, moveField, handleFieldChange }) => {
-    const ref = useRef<HTMLDivElement>(null); // ref'i useRef ile oluşturuyoruz
+interface DraggableFieldProps {
+  field: any;
+  moveField: (id: number, x: number, y: number) => void;
+  updateField: (id: number, updatedData: Partial<any>) => void;
+}
 
-    const [, drag] = useDrag(() => ({
-        type: 'FIELD',
-        item: field,
-        end: (item, monitor) => {
-            const delta = monitor.getDifferenceFromInitialOffset()!;
-            const x = field.x + delta.x;
-            const y = field.y + delta.y;
-            moveField(field.id, x, y);
-        }
-    }));
+const DraggableField: React.FC<DraggableFieldProps> = ({
+  field,
+  moveField,
+  updateField,
+}) => {
+  const [position, setPosition] = useState({ x: field.x || 0, y: field.y || 0 });
+  const ref = useRef<HTMLDivElement>(null);
 
-    // Drag işlevini ref'e bağlamak
-    drag(ref);
+  // Sürükleme için useDrag hook'u
+  const [, connectDrag] = useDrag({
+    type: "field",
+    item: { id: field.id, initialX: position.x, initialY: position.y }, // İlk pozisyonu da ilet
+  });
 
-    function renderField(field: Field): React.ReactNode {
-        switch (field.type) {
-            case 'text':
-                return (
-                    <input
-                        type="text"
-                        value={field.value}
-                        onChange={(e) => handleFieldChange(field.id, 'value', e.target.value)}
-                        className="p-2 border"
-                    />
-                );
-            case 'textarea':
-                return (
-                    <textarea
-                        value={field.value}
-                        onChange={(e) => handleFieldChange(field.id, 'value', e.target.value)}
-                        className="p-2 border"
-                    />
-                );
-            case 'checkbox':
-                return (
-                    <input
-                        type="checkbox"
-                        checked={field.value === 'true'}
-                        onChange={(e) => handleFieldChange(field.id, 'value', e.target.checked ? 'true' : 'false')}
-                    />
-                );
-            case 'image':
-                return <input type="file" onChange={(e) => handleFieldChange(field.id, 'value', e.target.value)} />;
-            case 'date':
-                return (
-                    <input
-                        type="date"
-                        value={field.value}
-                        onChange={(e) => handleFieldChange(field.id, 'value', e.target.value)}
-                        className="p-2 border"
-                    />
-                );
-            case 'radio':
-                return (
-                    <div>
-                        {field.options?.map((option, index) => (
-                            <div key={index}>
-                                <input
-                                    type="radio"
-                                    name={`radio-${field.id}`}
-                                    value={option}
-                                    checked={field.value === option}
-                                    onChange={(e) => handleFieldChange(field.id, 'value', e.target.value)}
-                                />
-                                <label>{option}</label>
-                            </div>
-                        ))}
-                    </div>
-                );
-            case 'file':
-                return <input type="file" onChange={(e) => handleFieldChange(field.id, 'value', e.target.value)} />;
-            default:
-                return null;
-        }
-    }
+  // Bırakma için useDrop hook'u
+  const [, connectDrop] = useDrop({
+    accept: "field", // Bu öğeyi kabul ederiz
+    hover: (item: any, monitor) => {
+      const delta = monitor.getDifferenceFromInitialOffset();
+      if (delta) {
+        const newX = item.initialX + delta.x; // Sürükleme sırasında yeni X pozisyonu
+        const newY = item.initialY + delta.y; // Sürükleme sırasında yeni Y pozisyonu
+        setPosition({ x: newX, y: newY }); // Konumu güncelle
+      }
+    },
+    drop: (item: any, monitor) => {
+      const clientOffset = monitor.getClientOffset();
+      if (clientOffset) {
+        // Mouse bıraktığında final pozisyonu kaydet
+        moveField(item.id, clientOffset.x, clientOffset.y);
+      }
+    },
+  });
 
+  // Drag ve Drop bağlantılarını birleştir
+  connectDrag(ref);
+  connectDrop(ref);
 
-    return (
-        <div
-            ref={ref} // ref'i kullanıyoruz
-            style={{
-                position: 'absolute',
-                left: `${field.x}px`,
-                top: `${field.y}px`,
-                padding: '10px',
-                border: '1px solid #ccc',
-                background: '#f9f9f9',
-                cursor: 'move',
-                width: 'auto',
-                height: 'auto'
-            }}
-        >
-            <ResizableBox width={200} height={100} minConstraints={[100, 50]} maxConstraints={[300, 150]}>
-                {renderField(field)} {/* renderField fonksiyonunu kullanarak form elemanını render ediyoruz */}
-            </ResizableBox>
-        </div>
-    );
+  return (
+    <div
+      ref={ref}
+      style={{
+        position: "absolute",
+        left: position.x, // Güncellenmiş X pozisyonu
+        top: position.y,  // Güncellenmiş Y pozisyonu
+        cursor: "move",   // Sürükleme sırasında mouse pointer'ı
+      }}
+      className="p-4 bg-blue-100 border rounded"
+    >
+      {field.label || "Sürüklenebilir Alan"} {/* Alanın etiketini göster */}
+    </div>
+  );
 };
 
 export default DraggableField;
