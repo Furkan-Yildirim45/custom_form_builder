@@ -5,12 +5,15 @@ interface DraggableFieldProps {
   field: any;
   moveField: (id: number, x: number, y: number) => void;
   updateField: (id: number, updatedData: Partial<any>) => void;
+  onSelect: () => void; // Alan seçme fonksiyonu
 }
+
 
 const DraggableField: React.FC<DraggableFieldProps> = ({
   field,
   moveField,
   updateField,
+  onSelect,
 }) => {
   // Sürükleme için pozisyon ve boyutları kontrol et
   const [position, setPosition] = useState({ x: field.x || 0, y: field.y || 0 });
@@ -80,7 +83,8 @@ const DraggableField: React.FC<DraggableFieldProps> = ({
 
   return (
     <div
-      ref={ref}
+    onClick={onSelect} 
+    ref={ref}
       style={{
         position: "absolute",
         left: position.x,

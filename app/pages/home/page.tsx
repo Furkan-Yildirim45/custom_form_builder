@@ -1,4 +1,5 @@
-import { useState } from "react";
+"use client"
+import React, { useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import FormBuilder from "@/app/components/form_builder/page";
@@ -10,8 +11,8 @@ interface HomePageProps {
 
 const HomePage: React.FC<HomePageProps> = ({ onLogout }) => {
   const [previewFields, setPreviewFields] = useState<any[]>([]);
+  const [selectedField, setSelectedField] = useState<any>(null); // Seçilen alan state'i
 
-  // Yeni form alanını preview listesine ekleme
   const addFieldToPreview = (field: any) => {
     setPreviewFields((prevFields) => [
       ...prevFields,
@@ -19,7 +20,6 @@ const HomePage: React.FC<HomePageProps> = ({ onLogout }) => {
     ]);
   };
 
-  // Alanı hareket ettirme
   const moveField = (id: number, x: number, y: number) => {
     setPreviewFields((prevFields) =>
       prevFields.map((field) =>
@@ -28,13 +28,15 @@ const HomePage: React.FC<HomePageProps> = ({ onLogout }) => {
     );
   };
 
-  // Alanı güncelleme
   const updateField = (id: number, updatedData: Partial<any>) => {
     setPreviewFields((prevFields) =>
       prevFields.map((field) =>
         field.id === id ? { ...field, ...updatedData } : field
       )
     );
+    if (selectedField?.id === id) {
+      setSelectedField({ ...selectedField, ...updatedData });
+    }
   };
 
   return (
@@ -55,6 +57,7 @@ const HomePage: React.FC<HomePageProps> = ({ onLogout }) => {
                 field={field}
                 moveField={moveField}
                 updateField={updateField}
+                onSelect={() => setSelectedField(field)} // Alan seçimi
               />
             ))}
           </div>
@@ -63,7 +66,66 @@ const HomePage: React.FC<HomePageProps> = ({ onLogout }) => {
         {/* Edit Options */}
         <div className="bg-white shadow rounded p-4">
           <h2 className="text-lg font-bold mb-4">Düzenleme Seçenekleri</h2>
-          <p>Buraya form düzenleme özellikleri ekleyebilirsiniz.</p>
+          {selectedField ? (
+            <div>
+              {/* Etiket Düzenleme */}
+              <label className="block mb-2">Etiket:</label>
+              <input
+                type="text"
+                value={selectedField.label}
+                onChange={(e) =>
+                  updateField(selectedField.id, { label: e.target.value })
+                }
+                className="border p-2 w-full mb-4"
+              />
+
+              {/* Stil Özellikleri */}
+              <label className="block mb-2">Genişlik (px):</label>
+              <input
+                type="number"
+                value={selectedField.style?.width || 200}
+                onChange={(e) =>
+                  updateField(selectedField.id, {
+                    style: { ...selectedField.style, width: Number(e.target.value) },
+                  })
+                }
+                className="border p-2 w-full mb-4"
+              />
+
+              <label className="block mb-2">Yükseklik (px):</label>
+              <input
+                type="number"
+                value={selectedField.style?.height || 50}
+                onChange={(e) =>
+                  updateField(selectedField.id, {
+                    style: { ...selectedField.style, height: Number(e.target.value) },
+                  })
+                }
+                className="border p-2 w-full mb-4"
+              />
+
+              <label className="block mb-2">Arka Plan Rengi:</label>
+              <input
+                type="color"
+                value={selectedField.style?.backgroundColor || "#ccc"}
+                onChange={(e) =>
+                  updateField(selectedField.id, {
+                    style: { ...selectedField.style, backgroundColor: e.target.value },
+                  })
+                }
+                className="border p-2 w-full mb-4"
+              />
+
+              <button
+                onClick={() => setSelectedField(null)}
+                className="bg-red-500 text-white py-2 px-4 rounded"
+              >
+                Seçimi Kaldır
+              </button>
+            </div>
+          ) : (
+            <p>Bir alan seçmek için üzerine tıklayın.</p>
+          )}
         </div>
       </div>
     </DndProvider>
@@ -71,8 +133,3 @@ const HomePage: React.FC<HomePageProps> = ({ onLogout }) => {
 };
 
 export default HomePage;
-
-
-
-//selam next.js de ön-izleme kısmındaki seçilmiş öğenin özellikleri sağdaki panelde gözükmesini istiyorum bunun için güncel kodlarım bunlar
-//olup güncel kodların üstüne istediğim senaryoyu yazar mısın?

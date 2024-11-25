@@ -1,15 +1,5 @@
 import React, { useState } from "react";
 
-type FieldType = "text" | "textarea" | "checkbox" | "image" | "date" | "radio" | "file";
-
-interface Field {
-  id: number;
-  type: FieldType;
-  label: string;
-  value: string;
-  options?: string[];
-}
-
 const FormBuilder: React.FC<{ addFieldToPreview: (field: Field) => void }> = ({
   addFieldToPreview,
 }) => {
@@ -19,14 +9,21 @@ const FormBuilder: React.FC<{ addFieldToPreview: (field: Field) => void }> = ({
 
   // Yeni form öğesi ekleme
   const addField = (type: FieldType) => {
-    const newField: Field = { id: Date.now(), type, label: "", value: "" };
-
+    const newField: Field = { 
+      id: Date.now(), 
+      type, 
+      label: "", 
+      value: "", 
+      x: 0, // Varsayılan değer
+      y: 0  // Varsayılan değer
+    };
+    
     if (type === "radio" && radioOptions.length > 0) {
       newField.options = radioOptions;
     }
 
     setFields([...fields, newField]);
-    addFieldToPreview(newField);  // HomePage bileşenine öğe ekleme
+    addFieldToPreview(newField); // HomePage bileşenine öğe ekleme
 
     if (type === "radio") {
       setRadioOptions([]);
@@ -49,22 +46,44 @@ const FormBuilder: React.FC<{ addFieldToPreview: (field: Field) => void }> = ({
       <h2 className="text-lg font-bold mb-4">Form Elemanları</h2>
       <div className="flex flex-col space-y-2">
         {/* Form öğesi eklemek için butonlar */}
-        <button className="btn-primary" onClick={() => addField("text")}>Metin Alanı Ekle</button>
-        <button className="btn-primary" onClick={() => addField("textarea")}>Metin Kutusu Ekle</button>
-        <button className="btn-primary" onClick={() => addField("checkbox")}>Onay Kutusu Ekle</button>
-        <button className="btn-primary" onClick={() => addField("image")}>Resim Ekle</button>
-        <button className="btn-primary" onClick={() => addField("date")}>Tarih Ekle</button>
-        <button className="btn-primary" onClick={() => setIsRadioOptionsVisible(true)}>Radyo Butonları Ekle</button>
-        <button className="btn-primary" onClick={() => addField("file")}>Dosya Yükleme Ekle</button>
+        <button className="btn-primary" onClick={() => addField("text")}>
+          Metin Alanı Ekle
+        </button>
+        <button className="btn-primary" onClick={() => addField("textarea")}>
+          Metin Kutusu Ekle
+        </button>
+        <button className="btn-primary" onClick={() => addField("checkbox")}>
+          Onay Kutusu Ekle
+        </button>
+        <button className="btn-primary" onClick={() => addField("image")}>
+          Resim Ekle
+        </button>
+        <button className="btn-primary" onClick={() => addField("date")}>
+          Tarih Ekle
+        </button>
+        <button className="btn-primary" onClick={() => setIsRadioOptionsVisible(true)}>
+          Radyo Butonları Ekle
+        </button>
+        <button className="btn-primary" onClick={() => addField("file")}>
+          Dosya Yükleme Ekle
+        </button>
 
         {isRadioOptionsVisible && (
           <div>
             <label>Radyo Butonları Seçenekleri (Virgülle ayırın):</label>
-            <input type="text" placeholder="Seçenekleri girin" className="border p-2" onChange={handleRadioOptionsChange} />
-            <button className="btn-primary mt-2" onClick={() => {
-              setIsRadioOptionsVisible(false);
-              addField("radio");
-            }}>
+            <input
+              type="text"
+              placeholder="Seçenekleri girin"
+              className="border p-2"
+              onChange={handleRadioOptionsChange}
+            />
+            <button
+              className="btn-primary mt-2"
+              onClick={() => {
+                setIsRadioOptionsVisible(false);
+                addField("radio");
+              }}
+            >
               Seçenekleri Ekle
             </button>
           </div>
