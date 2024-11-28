@@ -41,18 +41,44 @@ const HomePage: React.FC<HomePageProps> = ({ onLogout }) => {
     }
   };
 
+  const removeField = (id: number) => {
+    setPreviewFields((prevFields) =>
+      prevFields.filter((field) => field.id !== id)
+    );
+  };
+
+  // `Del` tuşu işlevi
+  const handleDeleteKey = (event: KeyboardEvent) => {
+    if (event.key === "Delete" && selectedField) {
+      removeField(selectedField.id);
+      setSelectedField(null); // Seçilen öğeyi sıfırlama
+    }
+  };
+
+  React.useEffect(() => {
+    window.addEventListener("keydown", handleDeleteKey);
+    return () => {
+      window.removeEventListener("keydown", handleDeleteKey);
+    };
+  }, [selectedField]);
+
 
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="h-screen grid grid-cols-[1fr_2fr_1fr] gap-4 p-4 bg-gray-100">
         <div className="bg-white shadow rounded p-4">
-          <FormBuilder addFieldToPreview={addFieldToPreview} />
+          <FormBuilder
+            addFieldToPreview={addFieldToPreview}
+            removeField={removeField}  // Pass removeField method
+            selectedField={selectedField} // Pass selectedField to FormBuilder
+            setSelectedField={setSelectedField} // Pass setter for selectedField
+          />
         </div>
         <div className="bg-white shadow rounded p-8 relative">
           <FormPreview
             previewFields={previewFields}
             moveField={moveField}
-            updateField={updateField} 
+            updateField={updateField}
             selectedField={selectedField}
             setSelectedField={setSelectedField}
           />
