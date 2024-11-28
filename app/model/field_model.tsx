@@ -1,4 +1,4 @@
-type FieldType = 'text' | 'textarea' | 'checkbox' | 'image' | 'date' | 'radio' | 'file';
+type FieldType = "text" | "password" | "email" | "number" | "tel" | "checkbox" | "radio" | "select" | "image" | "textarea" | "file" | "date" | "range";
 
 interface Field {
   id: number;

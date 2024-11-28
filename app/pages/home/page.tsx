@@ -1,16 +1,17 @@
-"use client";
+"use client"
 import React, { useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import FormBuilder from "@/app/components/form_builder/page";
 import FormPreview from "@/app/components/home/form_preview";
 import EditOptions from "@/app/components/home/form_edit";
+import Header from "@/app/components/home/form_header";
 
 interface HomePageProps {
   onLogout: () => void;
 }
 
-const HomePage: React.FC<HomePageProps> = ({ onLogout }) => {
+const HomePage: React.FC<HomePageProps> = () => {
   const [previewFields, setPreviewFields] = useState<any[]>([]);
   const [selectedField, setSelectedField] = useState<any>(null);
 
@@ -30,7 +31,7 @@ const HomePage: React.FC<HomePageProps> = ({ onLogout }) => {
   };
 
   const updateField = (id: number, updatedData: Partial<any>) => {
-    console.log("Güncellenen alan:", id, updatedData); // Takip için
+    console.log("Güncellenen alan:", id, updatedData);
     setPreviewFields((prevFields) =>
       prevFields.map((field) =>
         field.id === id ? { ...field, ...updatedData } : field
@@ -47,11 +48,10 @@ const HomePage: React.FC<HomePageProps> = ({ onLogout }) => {
     );
   };
 
-  // `Del` tuşu işlevi
   const handleDeleteKey = (event: KeyboardEvent) => {
     if (event.key === "Delete" && selectedField) {
       removeField(selectedField.id);
-      setSelectedField(null); // Seçilen öğeyi sıfırlama
+      setSelectedField(null);
     }
   };
 
@@ -62,38 +62,41 @@ const HomePage: React.FC<HomePageProps> = ({ onLogout }) => {
     };
   }, [selectedField]);
 
-
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="h-screen grid grid-cols-[1fr_2fr_1fr] gap-4 p-4 bg-gray-100">
-        <div className="bg-white shadow rounded p-4">
-          <FormBuilder
-            addFieldToPreview={addFieldToPreview}
-            removeField={removeField}  // Pass removeField method
-            selectedField={selectedField} // Pass selectedField to FormBuilder
-            setSelectedField={setSelectedField} // Pass setter for selectedField
-          />
-        </div>
-        <div className="bg-white shadow rounded p-8 relative">
-          <FormPreview
-            previewFields={previewFields}
-            moveField={moveField}
-            updateField={updateField}
-            selectedField={selectedField}
-            setSelectedField={setSelectedField}
-          />
-        </div>
-        <div className="bg-white shadow rounded p-4">
-          <EditOptions
-            selectedField={selectedField}
-            updateField={updateField}
-            clearSelection={() => setSelectedField(null)}
-          />
+      <div className="h-screen flex flex-col bg-gray-100">
+        {/* Header Bileşenini Ekle */}
+        <Header username="John Doe" role="Admin" />
+        
+        <div className="h-full grid grid-cols-[1fr_2fr_1fr] gap-4 p-4">
+          <div className="bg-white shadow rounded p-4">
+            <FormBuilder
+              addFieldToPreview={addFieldToPreview}
+              removeField={removeField}
+              selectedField={selectedField}
+              setSelectedField={setSelectedField}
+            />
+          </div>
+          <div className="bg-white shadow rounded p-8 relative">
+            <FormPreview
+              previewFields={previewFields}
+              moveField={moveField}
+              updateField={updateField}
+              selectedField={selectedField}
+              setSelectedField={setSelectedField}
+            />
+          </div>
+          <div className="bg-white shadow rounded p-4">
+            <EditOptions
+              selectedField={selectedField}
+              updateField={updateField}
+              clearSelection={() => setSelectedField(null)}
+            />
+          </div>
         </div>
       </div>
     </DndProvider>
   );
 };
 
-
-export default HomePage
+export default HomePage;

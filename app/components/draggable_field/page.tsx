@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import { useDrag, useDrop } from "react-dnd";
+import { BiReset } from "react-icons/bi"; // react-icons örneği
 
 interface DraggableFieldProps {
   field: any;
@@ -25,16 +26,22 @@ const DraggableField: React.FC<DraggableFieldProps> = ({
   const [initialMousePosition, setInitialMousePosition] = useState({ x: 0, y: 0 });
   const [isEditing, setIsEditing] = useState(false); // Düzenleme durumu
   const [editedText, setEditedText] = useState(field.label || "Metin"); // Düzenlenebilir metin
+  const [isDragging, setIsDragging] = useState(false); // Taşıma durumu
   const ref = useRef<HTMLDivElement>(null);
 
   const [, connectDrag] = useDrag({
     type: "field",
     item: { id: field.id, initialX: position.x, initialY: position.y },
+    canDrag: () => isSelected, // Yalnızca seçili alan taşınabilir
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
   });
 
   const [, connectDrop] = useDrop({
     accept: "field",
     hover: (item: any, monitor) => {
+      if (isDragging) return; // Taşıma yapılırken hover ile işlem yapılmasın
       const delta = monitor.getDifferenceFromInitialOffset();
       if (delta) {
         const newX = item.initialX + delta.x;
@@ -63,9 +70,11 @@ const DraggableField: React.FC<DraggableFieldProps> = ({
       const deltaY = e.clientY - initialMousePosition.y;
 
       setDimensions((prev) => ({
-        width: Math.max(100, prev.width + deltaX),
-        height: Math.max(50, prev.height + deltaY),
+        width: Math.max(100, prev.width + deltaX), // Min. genişlik 100px
+        height: Math.max(50, prev.height + deltaY), // Min. yükseklik 50px
       }));
+
+      // Fare pozisyonunu güncelle
       setInitialMousePosition({ x: e.clientX, y: e.clientY });
     }
   };
@@ -75,21 +84,59 @@ const DraggableField: React.FC<DraggableFieldProps> = ({
     updateField(field.id, { style: { ...dimensions } });
   };
 
-  const handleTextClick = () => {
-    setIsEditing(true); // Metin düzenleme moduna geçiş
-  };
-
-  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditedText(e.target.value); // Metin değişikliği
-  };
-
-  const handleBlur = () => {
-    setIsEditing(false); // Düzenlemeyi bitir
-    updateField(field.id, { label: editedText }); // Yeni metni kaydet
-  };
 
   connectDrag(ref);
   connectDrop(ref);
+
+  const renderField = (field: any) => {
+    switch (field.type) {
+      case "text":
+        return <input type="text" placeholder={field.label} />;
+      case "password":
+        return <input type="password" placeholder={field.label} />;
+      case "email":
+        return <input type="email" placeholder={field.label} />;
+      case "number":
+        return <input type="number" placeholder={field.label} />;
+      case "tel":
+        return <input type="tel" placeholder={field.label} />;
+      case "checkbox":
+        return <input type="checkbox" />;
+      case "radio":
+        return (
+          <div>
+            {field.options?.map((option: string, idx: number) => (
+              <label key={idx}>
+                <input type="radio" name={`radio-${field.id}`} value={option} />
+                {option}
+              </label>
+            ))}
+          </div>
+        );
+      case "select":
+        return (
+          <select>
+            {field.options?.map((option: string, idx: number) => (
+              <option key={idx} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        );
+      case "image":
+        return <input type="file" accept="image/*" />;
+      case "textarea":
+        return <textarea placeholder={field.label} />;
+      case "file":
+        return <input type="file" />;
+      case "date":
+        return <input type="date" />;
+      case "range":
+        return <input type="range" />;
+      default:
+        return null;
+    }
+  };
 
   return (
     <div
@@ -99,44 +146,41 @@ const DraggableField: React.FC<DraggableFieldProps> = ({
         position: "absolute",
         top: position.y,
         left: position.x,
+        border: isSelected ? "2px solid blue" : "1px solid grey",
+        backgroundColor: field.style?.backgroundColor || "transparent",
+        cursor: isSelected ? "move" : "default",
         width: dimensions.width,
         height: dimensions.height,
-        border: isSelected ? "2px solid blue" : "none",
-        backgroundColor: field.style?.backgroundColor || "transparent",
       }}
-      className="relative"
+      onMouseMove={handleResize} // Fare hareketiyle boyutlandırma
+      onMouseUp={handleResizeEnd} // Fare bırakıldığında boyutlandırmayı bitir
+      onMouseLeave={handleResizeEnd} // Fare alan dışına çıkarsa da boyutlandırmayı bitir
     >
-      <div className="absolute inset-0 flex items-center justify-center cursor-move">
-        {isEditing ? (
-          <input
-            type="text"
-            value={editedText}
-            onChange={handleTextChange}
-            onBlur={handleBlur}
-            autoFocus
-            className="w-full h-full bg-transparent border-none"
-          />
-        ) : (
-          <span onClick={handleTextClick}>{editedText}</span>
-        )}
+      {renderField(field)}
+
+      {/* Boyutlandırma İkonu */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: -15,
+          right: -15,
+          width: 30, // Daha büyük bir alan
+          height: 30, // Daha büyük bir alan
+          backgroundColor: "red", // Daha belirgin bir renk
+          borderRadius: "50%",
+          border: "1px solid grey",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          cursor: "nwse-resize",
+        }}
+        onMouseDown={handleResizeStart}
+      >
+        <BiReset size={16} />
       </div>
-
-      {isSelected && (
-        <>
-          {/* Boyutlandırma Tutamağı */}
-          <div
-            onMouseDown={handleResizeStart}
-            onMouseMove={handleResize}
-            onMouseUp={handleResizeEnd}
-            className="absolute bottom-0 right-0 w-4 h-4 bg-blue-500 cursor-se-resize"
-          />
-
-          {/* Taşıma İkonu */}
-          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-gray-300 cursor-move"></div>
-        </>
-      )}
     </div>
   );
 };
 
 export default DraggableField;
+
