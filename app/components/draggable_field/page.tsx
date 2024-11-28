@@ -6,32 +6,32 @@ interface DraggableFieldProps {
   moveField: (id: number, x: number, y: number) => void;
   updateField: (id: number, updatedData: Partial<any>) => void;
   onSelect: () => void; // Alan seçme fonksiyonu
+  isSelected: boolean; // Seçili alan mı?
 }
-
 
 const DraggableField: React.FC<DraggableFieldProps> = ({
   field,
   moveField,
   updateField,
   onSelect,
+  isSelected,
 }) => {
-  // Sürükleme için pozisyon ve boyutları kontrol et
   const [position, setPosition] = useState({ x: field.x || 0, y: field.y || 0 });
   const [dimensions, setDimensions] = useState({
-    width: 200, // Başlangıç genişliği
-    height: 50, // Başlangıç yüksekliği
+    width: field.style?.width || 200,
+    height: field.style?.height || 50,
   });
   const [isResizing, setIsResizing] = useState(false);
   const [initialMousePosition, setInitialMousePosition] = useState({ x: 0, y: 0 });
+  const [isEditing, setIsEditing] = useState(false); // Düzenleme durumu
+  const [editedText, setEditedText] = useState(field.label || "Metin"); // Düzenlenebilir metin
   const ref = useRef<HTMLDivElement>(null);
 
-  // Sürükleme için useDrag hook'u
   const [, connectDrag] = useDrag({
     type: "field",
     item: { id: field.id, initialX: position.x, initialY: position.y },
   });
 
-  // Bırakma için useDrop hook'u
   const [, connectDrop] = useDrop({
     accept: "field",
     hover: (item: any, monitor) => {
@@ -45,12 +45,12 @@ const DraggableField: React.FC<DraggableFieldProps> = ({
     drop: (item: any, monitor) => {
       const clientOffset = monitor.getClientOffset();
       if (clientOffset) {
-        moveField(item.id, clientOffset.x, clientOffset.y);
+        moveField(item.id, position.x, position.y); // Pozisyon güncelle
+        updateField(item.id, { x: position.x, y: position.y });
       }
     },
   });
 
-  // Boyutlandırma için gerekli fonksiyonlar
   const handleResizeStart = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsResizing(true);
@@ -58,83 +58,82 @@ const DraggableField: React.FC<DraggableFieldProps> = ({
   };
 
   const handleResize = (e: React.MouseEvent) => {
-    if (isResizing && ref.current) {
+    if (isResizing) {
       const deltaX = e.clientX - initialMousePosition.x;
       const deltaY = e.clientY - initialMousePosition.y;
 
-      // Yeni boyutları hesapla
-      const newWidth = Math.max(100, dimensions.width + deltaX); // Minimum 100px genişlik
-      const newHeight = Math.max(50, dimensions.height + deltaY); // Minimum 50px yükseklik
-
-      setDimensions({ width: newWidth, height: newHeight });
-
-      // Mouse pozisyonunu güncelle
+      setDimensions((prev) => ({
+        width: Math.max(100, prev.width + deltaX),
+        height: Math.max(50, prev.height + deltaY),
+      }));
       setInitialMousePosition({ x: e.clientX, y: e.clientY });
     }
   };
 
   const handleResizeEnd = () => {
     setIsResizing(false);
+    updateField(field.id, { style: { ...dimensions } });
   };
 
-  // Drag ve Drop bağlantılarını birleştir
+  const handleTextClick = () => {
+    setIsEditing(true); // Metin düzenleme moduna geçiş
+  };
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditedText(e.target.value); // Metin değişikliği
+  };
+
+  const handleBlur = () => {
+    setIsEditing(false); // Düzenlemeyi bitir
+    updateField(field.id, { label: editedText }); // Yeni metni kaydet
+  };
+
   connectDrag(ref);
   connectDrop(ref);
 
   return (
     <div
-    onClick={onSelect} 
-    ref={ref}
+      ref={ref}
+      onClick={onSelect}
       style={{
         position: "absolute",
-        left: position.x,
         top: position.y,
+        left: position.x,
         width: dimensions.width,
         height: dimensions.height,
-        cursor: isResizing ? "se-resize" : "move",
-        backgroundColor: "#ccc",
-        border: "2px solid #000",
+        border: isSelected ? "2px solid blue" : "none",
+        backgroundColor: field.style?.backgroundColor || "transparent",
       }}
-      className="p-4 bg-blue-100 border rounded"
+      className="relative"
     >
-      
-      {/* Input türleri */}
-      {field.type === "text" && <input type="text" />}
-      {field.type === "textarea" && <textarea />}
-      {field.type === "checkbox" && <input type="checkbox" />}
-      {field.type === "radio" && field.options?.map((option: string, index: number) => (
-        <div key={index}>
-          <input type="radio" /> {option}
-        </div>
-      ))}
+      <div className="absolute inset-0 flex items-center justify-center cursor-move">
+        {isEditing ? (
+          <input
+            type="text"
+            value={editedText}
+            onChange={handleTextChange}
+            onBlur={handleBlur}
+            autoFocus
+            className="w-full h-full bg-transparent border-none"
+          />
+        ) : (
+          <span onClick={handleTextClick}>{editedText}</span>
+        )}
+      </div>
 
-      {/* Boyutlandırma tutamağı */}
-      <div
-        onMouseDown={handleResizeStart}
-        style={{
-          position: "absolute",
-          bottom: 0,
-          right: 0,
-          width: "10px",
-          height: "10px",
-          backgroundColor: "#000",
-          cursor: "se-resize", // Sağ alt köşe boyutlandırma için
-        }}
-      />
+      {isSelected && (
+        <>
+          {/* Boyutlandırma Tutamağı */}
+          <div
+            onMouseDown={handleResizeStart}
+            onMouseMove={handleResize}
+            onMouseUp={handleResizeEnd}
+            className="absolute bottom-0 right-0 w-4 h-4 bg-blue-500 cursor-se-resize"
+          />
 
-      {/* Boyutlandırma işlemi aktifse, onMouseMove ve onMouseUp event'leri aktif olacak */}
-      {isResizing && (
-        <div
-          onMouseMove={handleResize}
-          onMouseUp={handleResizeEnd}
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-          }}
-        />
+          {/* Taşıma İkonu */}
+          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-gray-300 cursor-move"></div>
+        </>
       )}
     </div>
   );
