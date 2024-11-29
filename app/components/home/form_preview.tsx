@@ -1,5 +1,5 @@
+"use client";
 import React, { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
 import DraggableField from "../draggable_field/page";
 
 interface FormPreviewProps {
@@ -8,6 +8,7 @@ interface FormPreviewProps {
   updateField: (id: number, updatedData: Partial<any>) => void;
   selectedField: any;
   setSelectedField: (field: any) => void;
+  pdfUrl: string | null; // PDF URL'ini alıyoruz
 }
 
 const FormPreview: React.FC<FormPreviewProps> = ({
@@ -16,10 +17,10 @@ const FormPreview: React.FC<FormPreviewProps> = ({
   updateField,
   selectedField,
   setSelectedField,
+  pdfUrl,
 }) => {
   const [containerWidth, setContainerWidth] = useState<number>(0);
   const [previewHeight, setPreviewHeight] = useState<number>(0);
-  const [numPages, setNumPages] = useState<number>(0);
 
   // A4 en-boy oranı: 210mm x 297mm
   const A4AspectRatio = 210 / 297;
@@ -41,10 +42,6 @@ const FormPreview: React.FC<FormPreviewProps> = ({
       window.removeEventListener("resize", updateWidth);
     };
   }, []);
-
-  const onLoadSuccess = ({ numPages }: { numPages: number }) => {
-    setNumPages(numPages);
-  };
 
   return (
     <div>

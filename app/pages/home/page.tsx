@@ -7,13 +7,10 @@ import FormPreview from "@/app/components/home/form_preview";
 import EditOptions from "@/app/components/home/form_edit";
 import Header from "@/app/components/home/form_header";
 
-interface HomePageProps {
-  onLogout: () => void;
-}
-
-const HomePage: React.FC<HomePageProps> = () => {
+const HomePage: React.FC = () => {
   const [previewFields, setPreviewFields] = useState<any[]>([]);
   const [selectedField, setSelectedField] = useState<any>(null);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null); // PDF URL'ini tutacak state
 
   const updateField = (id: number, updatedData: Partial<any>) => {
     setSelectedField((prevState: any) => {
@@ -31,8 +28,6 @@ const HomePage: React.FC<HomePageProps> = () => {
   };
 
   const clearSelection = () => setSelectedField(null);
-
-  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const addFieldToPreview = (field: any) => {
     setPreviewFields((prevFields) => [
@@ -63,7 +58,7 @@ const HomePage: React.FC<HomePageProps> = () => {
       }
 
       if (event.key === "Escape" && selectedField) {
-        setSelectedField(null); // ESC tuşu ile seçimi kaldır
+        setSelectedField(null);
       }
     };
 
@@ -77,9 +72,9 @@ const HomePage: React.FC<HomePageProps> = () => {
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="h-screen flex flex-col bg-gray-100">
-        {/* Header Bileşenini Ekle */}
-        <Header username="John Doe" role="Admin"/>
-        
+        {/* setPdfUrl fonksiyonunu Header bileşenine geçiriyoruz */}
+        <Header username="John Doe" setPdfUrl={setPdfUrl} />
+
         <div className="h-full grid grid-cols-[1fr_2fr_1fr] gap-4 p-4">
           <div className="bg-white shadow rounded p-4">
             <FormBuilder
@@ -90,13 +85,13 @@ const HomePage: React.FC<HomePageProps> = () => {
             />
           </div>
           <div className="bg-white shadow rounded p-8 relative">
-            {/* PDF dosyasını burada gösteriyoruz */}
             <FormPreview
               previewFields={previewFields}
               moveField={moveField}
               updateField={updateField}
               selectedField={selectedField}
               setSelectedField={setSelectedField}
+              pdfUrl={pdfUrl} // PDF URL'ini FormPreview bileşenine gönder
             />
           </div>
           <div className="bg-white shadow rounded p-4">
