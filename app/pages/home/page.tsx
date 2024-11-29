@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import FormBuilder from "@/app/components/form_builder/page";
@@ -14,6 +14,25 @@ interface HomePageProps {
 const HomePage: React.FC<HomePageProps> = () => {
   const [previewFields, setPreviewFields] = useState<any[]>([]);
   const [selectedField, setSelectedField] = useState<any>(null);
+
+  const updateField = (id: number, updatedData: Partial<any>) => {
+    setSelectedField((prevState: any) => {
+      if (prevState?.id === id) {
+        return { ...prevState, ...updatedData };
+      }
+      return prevState;
+    });
+
+    setPreviewFields((prevFields) =>
+      prevFields.map((field) =>
+        field.id === id ? { ...field, ...updatedData } : field
+      )
+    );
+  };
+
+  const clearSelection = () => setSelectedField(null);
+
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const addFieldToPreview = (field: any) => {
     setPreviewFields((prevFields) => [
@@ -30,35 +49,28 @@ const HomePage: React.FC<HomePageProps> = () => {
     );
   };
 
-  const updateField = (id: number, updatedData: Partial<any>) => {
-    console.log("Güncellenen alan:", id, updatedData);
-    setPreviewFields((prevFields) =>
-      prevFields.map((field) =>
-        field.id === id ? { ...field, ...updatedData } : field
-      )
-    );
-    if (selectedField?.id === id) {
-      setSelectedField({ ...selectedField, ...updatedData });
-    }
-  };
-
   const removeField = (id: number) => {
     setPreviewFields((prevFields) =>
       prevFields.filter((field) => field.id !== id)
     );
   };
 
-  const handleDeleteKey = (event: KeyboardEvent) => {
-    if (event.key === "Delete" && selectedField) {
-      removeField(selectedField.id);
-      setSelectedField(null);
-    }
-  };
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Delete" && selectedField) {
+        removeField(selectedField.id);
+        setSelectedField(null);
+      }
 
-  React.useEffect(() => {
-    window.addEventListener("keydown", handleDeleteKey);
+      if (event.key === "Escape" && selectedField) {
+        setSelectedField(null); // ESC tuşu ile seçimi kaldır
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
     return () => {
-      window.removeEventListener("keydown", handleDeleteKey);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [selectedField]);
 
@@ -66,7 +78,7 @@ const HomePage: React.FC<HomePageProps> = () => {
     <DndProvider backend={HTML5Backend}>
       <div className="h-screen flex flex-col bg-gray-100">
         {/* Header Bileşenini Ekle */}
-        <Header username="John Doe" role="Admin" />
+        <Header username="John Doe" role="Admin"/>
         
         <div className="h-full grid grid-cols-[1fr_2fr_1fr] gap-4 p-4">
           <div className="bg-white shadow rounded p-4">
@@ -78,6 +90,7 @@ const HomePage: React.FC<HomePageProps> = () => {
             />
           </div>
           <div className="bg-white shadow rounded p-8 relative">
+            {/* PDF dosyasını burada gösteriyoruz */}
             <FormPreview
               previewFields={previewFields}
               moveField={moveField}
@@ -90,7 +103,7 @@ const HomePage: React.FC<HomePageProps> = () => {
             <EditOptions
               selectedField={selectedField}
               updateField={updateField}
-              clearSelection={() => setSelectedField(null)}
+              clearSelection={clearSelection}
             />
           </div>
         </div>

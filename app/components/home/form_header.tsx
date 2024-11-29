@@ -1,5 +1,5 @@
-import React from "react";
-import { FaSignOutAlt } from "react-icons/fa"; // Çıkış ikonu için
+import React, { useRef } from "react";
+import { FaSignOutAlt, FaDownload, FaUpload } from "react-icons/fa"; // Çıkış, İndirme ve Yükleme ikonları
 import { useRouter } from "next/navigation";
 
 interface HeaderProps {
@@ -7,17 +7,28 @@ interface HeaderProps {
   role: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ username, role }) => {
-  const router = useRouter(); // useRouter'ı burada çağır
+const Header: React.FC<HeaderProps> = ({ username, role, }) => {
+  const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleLogout = () => {
     if (window.history.length > 1) {
-      // Eğer geçmiş kaydı varsa, bir önceki sayfaya dön
       router.back();
     } else {
-      // Yoksa login sayfasına yönlendir
       router.push('/login');
     }
+  };
+
+  const handleDownload = () => {
+    const fileUrl = "/path/to/your/file.pdf"; // Dosya URL'si
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = "filename.pdf";
+    link.click();
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
   };
 
   return (
@@ -26,12 +37,24 @@ const Header: React.FC<HeaderProps> = ({ username, role }) => {
         <h2 className="text-xl font-semibold">{username}</h2>
         <p className="text-sm">{role}</p>
       </div>
-      <button
-        onClick={handleLogout}
-        className="bg-red-600 p-2 rounded-full hover:bg-red-700"
-      >
-        <FaSignOutAlt />
-      </button>
+      <div className="flex space-x-2">
+        <button onClick={handleDownload} className="bg-green-600 p-2 rounded-full hover:bg-green-700">
+          <FaDownload />
+        </button>
+        <button onClick={handleUploadClick} className="bg-yellow-600 p-2 rounded-full hover:bg-yellow-700">
+          <FaUpload />
+        </button>
+        <button onClick={handleLogout} className="bg-red-600 p-2 rounded-full hover:bg-red-700">
+          <FaSignOutAlt />
+        </button>
+      </div>
+
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        accept="application/pdf"
+      />
     </div>
   );
 };

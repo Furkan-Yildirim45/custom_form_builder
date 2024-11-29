@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { useDrag, useDrop } from "react-dnd";
-import { BiReset } from "react-icons/bi"; // react-icons örneği
+import { BiReset } from "react-icons/bi";
 
 interface DraggableFieldProps {
   field: any;
@@ -24,24 +24,26 @@ const DraggableField: React.FC<DraggableFieldProps> = ({
   });
   const [isResizing, setIsResizing] = useState(false);
   const [initialMousePosition, setInitialMousePosition] = useState({ x: 0, y: 0 });
-  const [isEditing, setIsEditing] = useState(false); // Düzenleme durumu
-  const [editedText, setEditedText] = useState(field.label || "Metin"); // Düzenlenebilir metin
-  const [isDragging, setIsDragging] = useState(false); // Taşıma durumu
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedText, setEditedText] = useState(field.label || "Metin");
+  const [isDragging, setIsDragging] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
+  // Taşıma işlemi için Drag'n'Drop
   const [, connectDrag] = useDrag({
     type: "field",
     item: { id: field.id, initialX: position.x, initialY: position.y },
-    canDrag: () => isSelected, // Yalnızca seçili alan taşınabilir
+    canDrag: () => isSelected, // Sadece seçilen alan taşınabilir
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
   });
 
+  // Alanı üzerine bırakma işlemi
   const [, connectDrop] = useDrop({
     accept: "field",
     hover: (item: any, monitor) => {
-      if (isDragging) return; // Taşıma yapılırken hover ile işlem yapılmasın
+      if (isDragging) return;
       const delta = monitor.getDifferenceFromInitialOffset();
       if (delta) {
         const newX = item.initialX + delta.x;
@@ -49,12 +51,9 @@ const DraggableField: React.FC<DraggableFieldProps> = ({
         setPosition({ x: newX, y: newY });
       }
     },
-    drop: (item: any, monitor) => {
-      const clientOffset = monitor.getClientOffset();
-      if (clientOffset) {
-        moveField(item.id, position.x, position.y); // Pozisyon güncelle
-        updateField(item.id, { x: position.x, y: position.y });
-      }
+    drop: (item: any) => {
+      moveField(item.id, position.x, position.y);
+      updateField(item.id, { x: position.x, y: position.y });
     },
   });
 
@@ -70,11 +69,10 @@ const DraggableField: React.FC<DraggableFieldProps> = ({
       const deltaY = e.clientY - initialMousePosition.y;
 
       setDimensions((prev) => ({
-        width: Math.max(100, prev.width + deltaX), // Min. genişlik 100px
-        height: Math.max(50, prev.height + deltaY), // Min. yükseklik 50px
+        width: Math.max(100, prev.width + deltaX),
+        height: Math.max(50, prev.height + deltaY),
       }));
 
-      // Fare pozisyonunu güncelle
       setInitialMousePosition({ x: e.clientX, y: e.clientY });
     }
   };
@@ -84,22 +82,36 @@ const DraggableField: React.FC<DraggableFieldProps> = ({
     updateField(field.id, { style: { ...dimensions } });
   };
 
-
   connectDrag(ref);
   connectDrop(ref);
 
   const renderField = (field: any) => {
     switch (field.type) {
       case "text":
-        return <input type="text" placeholder={field.label} />;
       case "password":
-        return <input type="password" placeholder={field.label} />;
       case "email":
-        return <input type="email" placeholder={field.label} />;
       case "number":
-        return <input type="number" placeholder={field.label} />;
       case "tel":
-        return <input type="tel" placeholder={field.label} />;
+        return (
+          <input
+            type={field.type}
+            placeholder={field.label}
+            style={{
+              width: dimensions.width,
+              height: dimensions.height,
+            }}
+          />
+        );
+      case "textarea":
+        return (
+          <textarea
+            placeholder={field.label}
+            style={{
+              width: dimensions.width,
+              height: dimensions.height,
+            }}
+          />
+        );
       case "checkbox":
         return <input type="checkbox" />;
       case "radio":
@@ -115,7 +127,12 @@ const DraggableField: React.FC<DraggableFieldProps> = ({
         );
       case "select":
         return (
-          <select>
+          <select
+            style={{
+              width: dimensions.width,
+              height: dimensions.height,
+            }}
+          >
             {field.options?.map((option: string, idx: number) => (
               <option key={idx} value={option}>
                 {option}
@@ -125,8 +142,6 @@ const DraggableField: React.FC<DraggableFieldProps> = ({
         );
       case "image":
         return <input type="file" accept="image/*" />;
-      case "textarea":
-        return <textarea placeholder={field.label} />;
       case "file":
         return <input type="file" />;
       case "date":
@@ -141,7 +156,10 @@ const DraggableField: React.FC<DraggableFieldProps> = ({
   return (
     <div
       ref={ref}
-      onClick={onSelect}
+      onClick={(e) => {
+        e.stopPropagation(); // Bu tıklamanın dışarıya taşımayı engellemesini istemiyoruz
+        onSelect(); // Seçim için sadece buradaki tıklama ile yapılacak
+      }}
       style={{
         position: "absolute",
         top: position.y,
@@ -152,21 +170,20 @@ const DraggableField: React.FC<DraggableFieldProps> = ({
         width: dimensions.width,
         height: dimensions.height,
       }}
-      onMouseMove={handleResize} // Fare hareketiyle boyutlandırma
-      onMouseUp={handleResizeEnd} // Fare bırakıldığında boyutlandırmayı bitir
-      onMouseLeave={handleResizeEnd} // Fare alan dışına çıkarsa da boyutlandırmayı bitir
+      onMouseMove={handleResize}
+      onMouseUp={handleResizeEnd}
+      onMouseLeave={handleResizeEnd}
     >
       {renderField(field)}
 
-      {/* Boyutlandırma İkonu */}
       <div
         style={{
           position: "absolute",
           bottom: -15,
           right: -15,
-          width: 30, // Daha büyük bir alan
-          height: 30, // Daha büyük bir alan
-          backgroundColor: "red", // Daha belirgin bir renk
+          width: 30,
+          height: 30,
+          backgroundColor: "red",
           borderRadius: "50%",
           border: "1px solid grey",
           display: "flex",
@@ -183,4 +200,3 @@ const DraggableField: React.FC<DraggableFieldProps> = ({
 };
 
 export default DraggableField;
-

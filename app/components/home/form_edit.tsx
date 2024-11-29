@@ -1,5 +1,4 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 interface EditOptionsProps {
   selectedField: any;
@@ -12,7 +11,6 @@ const EditOptions: React.FC<EditOptionsProps> = ({
   updateField,
   clearSelection,
 }) => {
-  // Geçici değişiklikler için state
   const [tempField, setTempField] = useState<any>(selectedField);
 
   // selectedField değiştiğinde tempField'ı da güncelle
@@ -20,12 +18,33 @@ const EditOptions: React.FC<EditOptionsProps> = ({
     setTempField(selectedField);
   }, [selectedField]);
 
-  // Değişiklikleri uygula
-  const applyChanges = () => {
-    if (tempField) {
-      updateField(tempField.id, tempField);
+  // Field değişikliklerini handle et
+  const handleFieldChange = (updatedData: Partial<any>) => {
+    if (selectedField) {
+      updateField(selectedField.id, updatedData); // Güncellenen alanı önizleme ekranına yansıt
     }
   };
+
+  // Enter tuşu ile formu güncelle
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (event.key === "Enter") {
+      handleFieldChange({ ...tempField }); // Değişiklikleri kaydet
+    }
+  };
+
+    // Değişiklikleri uygula
+    const applyChanges = () => {
+      if (tempField) {
+        updateField(tempField.id, tempField);
+      }
+    };
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [tempField]);
 
   return (
     <div>
@@ -38,7 +57,7 @@ const EditOptions: React.FC<EditOptionsProps> = ({
             type="text"
             value={tempField.label || ""}
             onChange={(e) =>
-              setTempField({ ...tempField, label: e.target.value })
+              handleFieldChange({ ...tempField, label: e.target.value })
             }
             className="border p-2 w-full mb-4"
           />
@@ -49,7 +68,7 @@ const EditOptions: React.FC<EditOptionsProps> = ({
             type="number"
             value={tempField.style?.width || 200}
             onChange={(e) =>
-              setTempField({
+              handleFieldChange({
                 ...tempField,
                 style: { ...tempField.style, width: Number(e.target.value) },
               })
@@ -63,7 +82,7 @@ const EditOptions: React.FC<EditOptionsProps> = ({
             type="number"
             value={tempField.style?.height || 50}
             onChange={(e) =>
-              setTempField({
+              handleFieldChange({
                 ...tempField,
                 style: { ...tempField.style, height: Number(e.target.value) },
               })
@@ -77,7 +96,7 @@ const EditOptions: React.FC<EditOptionsProps> = ({
             type="color"
             value={tempField.style?.backgroundColor || "#ccc"}
             onChange={(e) =>
-              setTempField({
+              handleFieldChange({
                 ...tempField,
                 style: { ...tempField.style, backgroundColor: e.target.value },
               })
@@ -91,7 +110,7 @@ const EditOptions: React.FC<EditOptionsProps> = ({
             type="number"
             value={tempField.style?.borderRadius || 0}
             onChange={(e) =>
-              setTempField({
+              handleFieldChange({
                 ...tempField,
                 style: {
                   ...tempField.style,
@@ -102,13 +121,86 @@ const EditOptions: React.FC<EditOptionsProps> = ({
             className="border p-2 w-full mb-4"
           />
 
-          {/* Uygula butonu */}
-          <button
-            onClick={applyChanges}
-            className="bg-green-500 text-white py-2 px-4 rounded mb-2"
+          {/* Opacity düzenleme */}
+          <label className="block mb-2">Opacity:</label>
+          <input
+            type="number"
+            step="0.1"
+            min="0"
+            max="1"
+            value={tempField.style?.opacity || 1}
+            onChange={(e) =>
+              handleFieldChange({
+                ...tempField,
+                style: {
+                  ...tempField.style,
+                  opacity: parseFloat(e.target.value),
+                },
+              })
+            }
+            className="border p-2 w-full mb-4"
+          />
+
+          {/* Border düzenleme */}
+          <label className="block mb-2">Kenar Çizgisi:</label>
+          <input
+            type="text"
+            placeholder="Örnek: 1px solid #000"
+            value={tempField.style?.border || ""}
+            onChange={(e) =>
+              handleFieldChange({
+                ...tempField,
+                style: { ...tempField.style, border: e.target.value },
+              })
+            }
+            className="border p-2 w-full mb-4"
+          />
+
+          {/* Border Renk düzenleme */}
+          <label className="block mb-2">Kenar Rengi:</label>
+          <input
+            type="color"
+            value={tempField.style?.borderColor || "#000000"}
+            onChange={(e) =>
+              handleFieldChange({
+                ...tempField,
+                style: { ...tempField.style, borderColor: e.target.value },
+              })
+            }
+            className="border p-2 w-full mb-4"
+          />
+
+          {/* Gölge düzenleme */}
+          <label className="block mb-2">Gölge (Box Shadow):</label>
+          <input
+            type="text"
+            placeholder="Örnek: 0px 4px 6px rgba(0,0,0,0.1)"
+            value={tempField.style?.boxShadow || ""}
+            onChange={(e) =>
+              handleFieldChange({
+                ...tempField,
+                style: { ...tempField.style, boxShadow: e.target.value },
+              })
+            }
+            className="border p-2 w-full mb-4"
+          />
+
+          {/* Metin Hizalama (Text Align) */}
+          <label className="block mb-2">Metin Hizalama:</label>
+          <select
+            value={tempField.style?.textAlign || "left"}
+            onChange={(e) =>
+              handleFieldChange({
+                ...tempField,
+                style: { ...tempField.style, textAlign: e.target.value },
+              })
+            }
+            className="border p-2 w-full mb-4"
           >
-            Uygula
-          </button>
+            <option value="left">Sol</option>
+            <option value="center">Ortala</option>
+            <option value="right">Sağ</option>
+          </select>
 
           {/* Seçimi temizle butonu */}
           <button
